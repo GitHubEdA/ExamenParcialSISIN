@@ -10,11 +10,14 @@ class Nodo(object):
         self.hijos.append(hijo)
 
 # Separa los datos de ViajeRomania y los ingresa a un diccionario
-def ConvertirRutaADiccionario():
-    NodoArbol = [nodes.split('-') for nodes in ViajeRomania.split('*')][:-1]
-    NodoArbol = {str(NodoPadre): [str(NodoHijo) for NodoHijo in NodoHijos.split()]
-                  for NodoPadre, NodoHijos in NodoArbol}
-    return NodoArbol
+def ConvertirRutaADiccionario(rutas, dict = {}):
+    rutas = rutas.split('*')
+    for ruta in rutas:
+        if ruta is '':
+            break
+        parent, children = ruta.split('-')
+        dict[parent] = children.split(' ')
+    return dict
 
 # Funcion que de diccionario lo convierte en un nodo con sub nodos (arbol)
 def DiccionarioANodos():
@@ -95,7 +98,7 @@ ViajeRomania = ('Arad-Zerind Sibiu Timisoara*'
                 'Iasi-Vaslui Neamt*'
                 'Neamt-Iasi*')
 
-NodosArbol = ConvertirRutaADiccionario()
+NodosArbol = ConvertirRutaADiccionario(ViajeRomania)
 CiudadesRomania = DiccionarioANodos()
 Visitados = []
 busquedas = BusquedaEnProdunfidad(CiudadesRomania, 'Arad', 'Bucharest')
