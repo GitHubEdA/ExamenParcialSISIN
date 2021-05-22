@@ -1,105 +1,117 @@
 import queue as cola
 
+
 # Nodo con constructor y un metodo para agregar a la pila
 class Nodo(object):
     def __init__(self, nombre_ciudad):
         self.nombre_ciudad = nombre_ciudad
         self.hijos = []
+        self.is_visited = False
 
     def agregar_nodo_hijo(self, hijo):
         self.hijos.append(hijo)
 
+    def __str__(self):
+        return self.nombre_ciudad
+
+
 # Separa los datos de ViajeRomania y los ingresa a un diccionario
-def ConvertirRutaADiccionario(rutas, dict = {}):
+def ConvertirRutaADiccionario(rutas, dict={}):
     rutas = rutas.split('*')
     for ruta in rutas:
-        if ruta is '':
+        if ruta == '':
             break
         parent, children = ruta.split('-')
         dict[parent] = children.split(' ')
     return dict
 
+
 # Funcion que de diccionario lo convierte en un nodo con sub nodos (arbol)
 def DiccionarioANodos():
-    NodosDiccionario = {nodo: Nodo(nodo) for nodo in NodosArbol}
-    for NodoPadre, NodoHijos in NodosArbol.items():
-        for NodoHijo in NodoHijos:
-            NodosDiccionario[NodoPadre].agregar_nodo_hijo(NodosDiccionario[NodoHijo])
+    arbol = {}
+    for ciudad in NodosArbol:
+        arbol[ciudad] = Nodo(ciudad)
 
-    Ciudades = NodosDiccionario.values()
-    return Ciudades
+    for parent, children in NodosArbol.items():
+        for child in children:
+            arbol[parent].agregar_nodo_hijo(arbol[child])
 
-# Mostramos las ciudades que estan dentro de la Clase nodo
-def MostrarCiudades():
-    print('')
-    print('--------- Lista de Ciudades ---------')
-    print('')
-    for ciudad in CiudadesRomania:
-        print(ciudad.datos, ":",", ".join((str(ciudad_contigua.datos) for ciudad_contigua in ciudad.hijos) if ciudad.hijos else "No tiene vecinos"))
+    return arbol
 
-    print('')
 
 # Busqueda en profundidad para una ruta
-def BusquedaEnProdunfidad(arbol,NodoIncio,NodoFin):
-    global Encontrado
-    Encontrado = False
+def BusquedaEnProdunfidad(arbol, ciudad_origen, ciudad_destino):
     pila = []
 
     print("Recorrido con algoritmo de Profundidad (DSF)")
-    pila.append(NodoIncio)
+    pila.append(arbol[ciudad_origen])
 
     while pila:
-        print("Pila: ", pila)
-        NodoActual = pila.pop()
-        if NodoActual not in Visitados:
-            if NodoActual == NodoFin:
-                print("Se encontró el destino: ", NodoActual)
-                Encontrado = True
-                Visitados.append(NodoActual)
-                print("Ciudades Visitados: ", Visitados)
-                print("Iteraciones: " +str(len(Visitados)))
-                ReiniciarVisitados()
+        ciudad_actual = pila.pop()
 
+        if ciudad_actual.nombre_ciudad not in CiudadesVisitadas:
+            CiudadesVisitadas.append(ciudad_actual.nombre_ciudad)
+            if ciudad_actual.nombre_ciudad == ciudad_destino:
+                break
             else:
-                print("Ciudad Actual: ", NodoActual)
-                Visitados.append(NodoActual)
+                print("Ciudad Actual: ", ciudad_actual)
 
-        for ciudad in arbol:
-            if ciudad.nombre_ciudad == NodoActual:
-                for vecinos in ciudad.hijos:
-                    if vecinos.nombre_ciudad not in Visitados:
-                        pila.append(vecinos.nombre_ciudad)
+        for ciudad in arbol.values():
+            if ciudad.nombre_ciudad == ciudad_actual.nombre_ciudad:
+                for child in ciudad.hijos:
+                    if child.nombre_ciudad not in CiudadesVisitadas:
+                        pila.append(child)
 
-        if Encontrado == True:
-            break
+def RutasDeProfundidad(arbol, ciudad_origen, ciudad_destino):
+    dict = {}
+    for ciudad in arbol.values():
+        dict[ciudad.nombre_ciudad] = []
+        for child in ciudad.hijos:
+            dict[ciudad.nombre_ciudad].append(str(child))
+    pila = [(ciudad_origen, [ciudad_origen])]
+    while pila:
+        (ciudad_actual, ruta) = pila.pop()
+        valids = [hijo for hijo in dict[ciudad_actual] if hijo not in ruta]
+        for siguiente in valids:
+            if siguiente == ciudad_destino:
+                yield ruta + [siguiente]
+            else:
+                pila.append((siguiente, ruta + [siguiente]))
 
-#Reiniciar Visitados
+# Reiniciar Visitados
 def ReiniciarVisitados():
-    del Visitados[:]
+    del CiudadesVisitadas[:]
 
-ViajeRomania = ('Arad-Zerind Sibiu Timisoara*'
-                'Zerind-Arad Oradea*'
-                'Sibiu-Faragas RimnicuVilcea Arad*'
-                'Timisoara-Lugoj Arad*'
-                'Oradea-Sibiu Zerind*'
-                'Faragas-Bucharest Sibiu*'
-                'RimnicuVilcea-Craiova Pitesti Sibiu*'
-                'Lugoj-Mehadia Timisoara*'
-                'Mehadia-Dubreta Lugoj*'
-                'Dubreta-Craiova Mehadia*'
-                'Craiova-RimnicuVilcea Pitesti Dubreta*'
-                'Pitesti-Bucharest RimnicuVilcea Craiova*'
-                'Bucharest-Pitesti Faragas Giurgiu Urziceni*'
-                'Giurgiu-Bucharest*'
-                'Urziceni-Bucharest Vaslui Hirsova*'
-                'Hirsova-Urziceni Eforie*'
-                'Eforie-Hirsova*'
-                'Vaslui-Urziceni Iasi*'
-                'Iasi-Vaslui Neamt*'
-                'Neamt-Iasi*')
+
+ViajeRomania = ('Cajamarca-Chiclayo Trujillo Huaraz*'
+             'Chiclayo-Piura Cajamarca Trujillo*'
+             'Piura-Tumbes Chiclayo*'
+             'Tumbes-Piura*'
+             'Trujillo-Chiclayo Cajamarca Huaraz Lima*'
+             'Huaraz-Cajamarca Trujillo Lima Huanuco*'
+             'Huanuco-Huaraz Pasco*'
+             'Pasco-Huanuco Lima Junin*'
+             'Junin-Pasco Lima Cuzco Huancavelica Cuzco*'
+             'Cuzco-Junin Huancavelica Abancay*'
+             'Abancay-Cuzco Huancavelica Ica*'
+             'Ica-Abancay Huancavelica Lima*'
+             'Lima-Ica Huancavelica Junin Pasco Huaraz Trujillo*'
+             'Huancavelica-Ica Lima Junin Abancay*')
 
 NodosArbol = ConvertirRutaADiccionario(ViajeRomania)
 CiudadesRomania = DiccionarioANodos()
-Visitados = []
-busquedas = BusquedaEnProdunfidad(CiudadesRomania, 'Arad', 'Bucharest')
+CiudadesVisitadas = []
+busquedas = BusquedaEnProdunfidad(CiudadesRomania, 'Cajamarca', 'Cuzco')
+rutasVisitadas = RutasDeProfundidad(CiudadesRomania, 'Cajamarca', 'Cuzco')
 
+validRoutes = []
+
+for ruta in rutasVisitadas:
+    validRoutes.append(str(ruta))
+
+all_routes = list(dict.fromkeys(validRoutes))
+
+counter = 0
+for route in all_routes:
+    print(f"Ruta: {counter} - {route}")
+    counter = counter + 1
